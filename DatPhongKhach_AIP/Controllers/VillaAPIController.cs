@@ -2,6 +2,7 @@
 using DatPhongKhach_AIP.Models;
 using DatPhongKhach_AIP.Models.Dto;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DatPhongKhach_AIP.Controllers
@@ -14,10 +15,14 @@ namespace DatPhongKhach_AIP.Controllers
     
     public class VillaAPIController : ControllerBase
     {
+        //tiêm logger của asp cung ccaaps từ bên ngoài vào controller mục đích để thêm thông tin vào nhật ký
+        private readonly ILogger<VillaAPIController> _logger;
+        public VillaAPIController(ILogger<VillaAPIController> logger) { _logger = logger; }
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<VillaDTO>> GetVillas()
         {
+            _logger.LogInformation("getting all villas");
             //OK là trạng thái hợp lệ 200
             return Ok(VillaStore.villalist);
         }
@@ -32,7 +37,9 @@ namespace DatPhongKhach_AIP.Controllers
         //        [ProducesResponseType(200)]
         public ActionResult<VillaDTO> GetVillas(int id)
         {
-            if(id == 0) { return BadRequest(); }
+            if(id == 0) {
+                _logger.LogError("Get Villa Error with ID" + id);
+                return BadRequest(); }
             // nếu id = 0 thì trả về trạng thái 400 lỗi
             var villa = VillaStore.villalist.FirstOrDefault(u => u.Id == id);
             if (villa == null) { return NotFound(); }
@@ -109,6 +116,31 @@ namespace DatPhongKhach_AIP.Controllers
             villa.Occupancy = villaDTO.Occupancy;
             return NoContent();
         }
+
+        [HttpPatch("{id:int}", Name = "UpdatePartiakVilla")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult UpdatePartiakVilla(int id, JsonPatchDocument<VillaDTO> patchDTO)
+        {
+            if (patchDTO == null || id == 0)
+            {
+                return BadRequest();
+            }
+            var villa = VillaStore.villalist.FirstOrDefault(u => u.Id == id);
+            if(villa == null)
+            {
+                return BadRequest();
+            } 
+            //AppltTo: truyền đối tượng cần thao tác  là hàm có thể 2 tham số tham số 1 là đối tượng cần thao tác
+            //tham số 2 là tính hợp lệ của đối tượng
+            patchDTO.ApplyTo(villa, ModelState);
+            if (!ModelState.IsValid){
+                return BadRequest(ModelState);
+            }
+            return NoContent();
+        }
+
 
     }
 }
