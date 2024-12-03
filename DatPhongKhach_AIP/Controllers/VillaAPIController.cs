@@ -16,13 +16,14 @@ namespace DatPhongKhach_AIP.Controllers
     public class VillaAPIController : ControllerBase
     {
         //tiêm logger của asp cung ccaaps từ bên ngoài vào controller mục đích để thêm thông tin vào nhật ký
-        private readonly ILogger<VillaAPIController> _logger;
-        public VillaAPIController(ILogger<VillaAPIController> logger) { _logger = logger; }
+        public VillaAPIController()
+        {
+        }
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<VillaDTO>> GetVillas()
         {
-            _logger.LogInformation("getting all villas");
+
             //OK là trạng thái hợp lệ 200
             return Ok(VillaStore.villalist);
         }
@@ -38,7 +39,7 @@ namespace DatPhongKhach_AIP.Controllers
         public ActionResult<VillaDTO> GetVillas(int id)
         {
             if(id == 0) {
-                _logger.LogError("Get Villa Error with ID" + id);
+
                 return BadRequest(); }
             // nếu id = 0 thì trả về trạng thái 400 lỗi
             var villa = VillaStore.villalist.FirstOrDefault(u => u.Id == id);
